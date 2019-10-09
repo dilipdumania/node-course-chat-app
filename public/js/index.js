@@ -1,3 +1,5 @@
+//import { listenerCount } from "cluster";
+
 var socket = io();
 socket.on('connect', function () {
     console.log('connected to chat server');
@@ -12,6 +14,19 @@ socket.on('newMsg', function (msg) {
     
     var li = jQuery('<li></li>');
     li.text(`${msg.from}: ${msg.text}`);
+    jQuery('#messages').append(li);
+});
+
+socket.on('newLocationMsg', function (msg) {
+    console.log('New Location Msg received: ', msg);
+    
+    var li = jQuery('<li></li>');
+    li.text(`${msg.from}: `);
+
+    var a = jQuery('<a target="_blank">My Current Location</a>');
+    a.attr('href', msg.url);
+
+    li.append(a);
     jQuery('#messages').append(li);
 });
 
@@ -33,3 +48,18 @@ jQuery('#message-form').on('submit', function (e) {
     });
 });
 
+var locationButton = jQuery('#send-location');
+locationButton.on('click', function () {
+    if (!navigator.geolocation) {
+        console.log("Geolocation service not available");
+    }
+
+    navigator.geolocation.getCurrentPosition(function (position) {
+        socket.emit('createLocationMsg', {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+        })
+    }, function () {
+        console.log('Unable to fetch geolocation');
+    })
+})
